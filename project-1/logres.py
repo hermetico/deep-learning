@@ -13,8 +13,8 @@ import matplotlib.pyplot as plt
 
 BATCH_SIZE=60
 DATASET='mnist.pkl.gz'
-ETA=0.13
-N_EPOCHS=50
+ETA=0.15
+N_EPOCHS=20
 EARLY_STOPPING = 10
 
 
@@ -219,12 +219,6 @@ def logreg(n_in=28 * 28, n_out=10, batch_size=60, dataset='mnist.pkl.gz', learni
 
 
 
-    #####################
-    ## Early stoping
-    patience = 5000
-    patience_increase = 2
-    improvement_threshold = 0.995
-
     ########################################
     # Training the model
 
@@ -232,10 +226,11 @@ def logreg(n_in=28 * 28, n_out=10, batch_size=60, dataset='mnist.pkl.gz', learni
 
     best_validation_loss = 1
     start_time = timeit.default_timer()
-    stop = False
 
+    keep_looping = True
+    stop = 0
     epoch = 0
-    while epoch < n_epochs and not stop:
+    while epoch < n_epochs and keep_looping:
 
     #for epoch in range(n_epochs):
 
@@ -276,7 +271,7 @@ def logreg(n_in=28 * 28, n_out=10, batch_size=60, dataset='mnist.pkl.gz', learni
                current_val_error * 100.))
 
         # if we got the best validation score until now
-        if current_val_error < best_validation_loss * improvement_threshold:
+        if current_val_error < best_validation_loss:
             best_validation_loss = current_val_error
             # test it on the test set
 
@@ -313,17 +308,18 @@ def logreg(n_in=28 * 28, n_out=10, batch_size=60, dataset='mnist.pkl.gz', learni
             cPickle.dump(saved_params, save_file, -1)  # the -1 is for HIGHEST_PROTOCOL
 
             save_file.close()
+            stop = 0
 
         else:
-            patience = max(patience, epoch * patience_increase)
+            stop += 1
             ########################################################
             #
             # IMPLEMENT EARLY STOPPING THAT STOPS THE LOOP/TRAINING
             # IF THE MODEL IS NO LONGER PROGRESSING
             #
             ########################################################
-            if patience <= epoch:
-                stop = True
+            if stop <= early_stopping:
+                keep_looping = False
                 print("Early stoping")
 
         # next expoch
