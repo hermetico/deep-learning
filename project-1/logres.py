@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 BATCH_SIZE=60
 DATASET='mnist.pkl.gz'
 ETA=0.13
-N_EPOCHS=10
+N_EPOCHS=50
 EARLY_STOPPING = 10
 
 
@@ -94,10 +94,6 @@ def logreg(n_in=28 * 28, n_out=10, batch_size=60, dataset='mnist.pkl.gz', learni
 
 
 
-
-
-
-
     # Building the model with symbolic matrices and vectors
     print('Building the model...')
     x = T.matrix('x')  # Symbolic input matrix
@@ -116,6 +112,8 @@ def logreg(n_in=28 * 28, n_out=10, batch_size=60, dataset='mnist.pkl.gz', learni
     # b is a vector where element-k represent the free parameter of hyperplane-k
     p_y_given_x = T.exp(T.dot(x, W) + b)
     p_y_given_x = p_y_given_x / T.sum(p_y_given_x,axis=1)[:,None]
+
+    ## using softmax implementation
     #p_y_given_x = T.nnet.softmax(T.dot(x, W) + b) # <-- this is another way to calculate predictions
 
 
@@ -221,6 +219,11 @@ def logreg(n_in=28 * 28, n_out=10, batch_size=60, dataset='mnist.pkl.gz', learni
 
 
 
+    #####################
+    ## Early stoping
+    patience = 5000
+    patience_increase = 2
+    improvement_threshold = 0.995
 
     ########################################
     # Training the model
@@ -229,10 +232,12 @@ def logreg(n_in=28 * 28, n_out=10, batch_size=60, dataset='mnist.pkl.gz', learni
 
     best_validation_loss = 1
     start_time = timeit.default_timer()
-    stop = 0
+    stop = False
 
     epoch = 0
-    for epoch in range(n_epochs):
+    while epoch < n_epochs and not stop:
+
+    #for epoch in range(n_epochs):
 
         # Running mini batches through the training function
         mean_tr_error = []
@@ -264,14 +269,14 @@ def logreg(n_in=28 * 28, n_out=10, batch_size=60, dataset='mnist.pkl.gz', learni
             mean_val_error.append(validate_model(minibatch_index))
 
         current_val_error = np.mean(mean_val_error)
-        print('\nepoch %i, minibatch %i/%i, validation error %f %%' %
+        print('\n\tepoch %i, minibatch %i/%i, validation error %f %%' %
               (epoch + 1,
                minibatch_index + 1,
                n_valid_batches,
                current_val_error * 100.))
 
         # if we got the best validation score until now
-        if current_val_error < best_validation_loss:
+        if current_val_error < best_validation_loss * improvement_threshold:
             best_validation_loss = current_val_error
             # test it on the test set
 
@@ -289,7 +294,7 @@ def logreg(n_in=28 * 28, n_out=10, batch_size=60, dataset='mnist.pkl.gz', learni
                 mean_test_error.append(test_model(minibatch_index))
 
             current_test_error = np.mean(mean_val_error)
-            print('\nepoch %i, minibatch %i/%i, test error %f %%' %
+            print('\nTESTING: epoch %i, minibatch %i/%i, test error %f %%' %
                   (epoch + 1,
                    minibatch_index + 1,
                    n_valid_batches,
@@ -297,7 +302,7 @@ def logreg(n_in=28 * 28, n_out=10, batch_size=60, dataset='mnist.pkl.gz', learni
 
             # retreive the best parameters
             params = [W, b]
-            saved_params = {'w': W, 'b': b}
+            saved_params = {'W': W, 'b': b}
 
             ########################################################
             #
@@ -310,18 +315,19 @@ def logreg(n_in=28 * 28, n_out=10, batch_size=60, dataset='mnist.pkl.gz', learni
             save_file.close()
 
         else:
-            stop += 1
-        #TODO
-        print("Early stop not implemented yet")
-        #if
+            patience = max(patience, epoch * patience_increase)
             ########################################################
             #
             # IMPLEMENT EARLY STOPPING THAT STOPS THE LOOP/TRAINING
             # IF THE MODEL IS NO LONGER PROGRESSING
             #
             ########################################################
+            if patience <= epoch:
+                stop = True
+                print("Early stoping")
 
-
+        # next expoch
+        epoch += 1
 
     end_time = timeit.default_timer()
     print(
@@ -353,7 +359,14 @@ def predict():
     # USE THE LOADED PARAMETERS TO INITIALIZE THE WEIGHT MATRIX AND THE BIAS VECTOR
     #
     ########################################################
+    x = T.matrix('x')  # Symbolic input matrix
 
+    p_y_given_x = T.nnet.softmax(T.dot(x, params['W']) + params['b']) # <-- this is another way to calculate predictions
+    y_pred = T.argmax(p_y_given_x, axis=1)
+
+    # Symbolic description of how to compute prediction as class whose
+    # probability is maximal
+    y_pred = T.argmax(p_y_given_x, axis=1)
 
     # Compile a predictor function
     predict_model = theano.function(
@@ -362,7 +375,7 @@ def predict():
 
 
     # Printing a graph of the predicting network
-    #theano.printing.pydotprint(y_pred, outfile="logreg_predicter.png", var_with_name_simple=True)
+    theano.printing.pydotprint(y_pred, outfile="logreg_predicter.png", var_with_name_simple=True)
 
     # We can test it on some examples from test test
     dataset='mnist.pkl.gz'
