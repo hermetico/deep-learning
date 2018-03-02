@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from keras.layers import Input, Dense, Flatten, MaxPool2D, Conv2D, concatenate, Add
+from keras.layers import Input, Dense, Flatten, MaxPool2D, Conv2D, Concatenate, Add
 from keras.models import Model
 import tensorflow as tf
 from keras.utils import np_utils, plot_model
@@ -100,8 +100,30 @@ def assignment(data_train = None,
     # Connecting the layers of the network. Starting with an Input layer....
     inp = Input(batch_shape=(batch_size,) + x_train.shape[1:])
 
-    flat = Flatten()(inp)
-    out = Dense(units=10, activation='softmax')(flat)
+    conv2D_1 = Conv2D(filters, kernel_size=(2, 2),
+                 padding='same', activation='relu', strides=2)(inp)
+
+    conv2D_2 = Conv2D(filters, kernel_size=(7, 7),
+                 padding='valid', activation='relu')(inp)
+
+    max_pool2D_1 = MaxPool2D(pool_size=(4, 4), padding='valid', strides=1)(conv2D_1)
+
+    max_pool2D_2 = MaxPool2D(pool_size=(2, 2), padding='same')(conv2D_2)
+
+
+    add_1 = Add()([max_pool2D_1, max_pool2D_2])
+
+    conv2D_3 = Conv2D(filters, kernel_size=(2, 2),
+                      padding='valid', activation='relu', strides=1)(add_1)
+
+    flat = Flatten()(conv2D_3)
+
+    dense_1 = Dense(units=1024, activation="elu")(flat)
+    dense_2 = Dense(units=512, activation="selu")(dense_1)
+
+    con_1 = Concatenate()([dense_2, flat])
+
+    out = Dense(units=10, activation='softmax')(con_1)
 
 
 
@@ -119,7 +141,7 @@ def assignment(data_train = None,
     plot_model(cnn, to_file='I_<3_U_CNN.png')
 
 
-    if train == True:
+    if train:
 
         ################################################
         #
@@ -138,7 +160,7 @@ def assignment(data_train = None,
 
 
 
-    if predict == True:
+    if predict:
         print('Predicting...')
         print("Loading the model")
         cnn.load_weights(model_name)
