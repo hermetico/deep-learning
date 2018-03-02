@@ -64,13 +64,14 @@ y_test = np_utils.to_categorical(y_test, 10)
 
 
 
-def cnn(data_train = None,
+def assignment(data_train = None,
         data_test = None ,
         batch_size = batch_size,
         epochs = epochs,
         train = True,
         predict = True,
-        filters = filters):
+        filters = filters,
+        model_name = "fancy_model.hdf5"):
 
     if data_train != None and data_test != None:
         print('Training and testing')
@@ -96,12 +97,11 @@ def cnn(data_train = None,
     #
     ################################################
 
+    # Connecting the layers of the network. Starting with an Input layer....
+    inp = Input(batch_shape=(batch_size,) + x_train.shape[1:])
 
-    out = Dense(units=10, activation='softmax')(some_layer_you_have_defined_above)
-
-
-
-
+    flat = Flatten()(inp)
+    out = Dense(units=10, activation='softmax')(flat)
 
 
 
@@ -112,6 +112,8 @@ def cnn(data_train = None,
     #   Compile the model
     #
     ################################################
+    cnn.compile(optimizer='sgd', loss='categorical_crossentropy',
+                metrics=['accuracy'])
 
     cnn.summary()
     plot_model(cnn, to_file='I_<3_U_CNN.png')
@@ -124,27 +126,31 @@ def cnn(data_train = None,
         # Make something with the ModelCheckpoint function
         #
         ################################################
+        # TODO improve the checkpoint
+        checkpoint = ModelCheckpoint(model_name, save_best_only=True)
 
         cnn.fit(x_train, y_train,
             shuffle=True,
             epochs=epochs,
             batch_size=batch_size,
             validation_split=0.2,
-            callbacks=#...#)
+            callbacks=[checkpoint])
 
 
 
     if predict == True:
         print('Predicting...')
         print("Loading the model")
-        cnn.load_weights(#....
+        cnn.load_weights(model_name)
         pred = cnn.predict(x_test, batch_size=batch_size)
         tmp = [np.argmax(i) for i in pred[:10]]
         print('The 10 first test list examples have been predicted as the following:')
+        for i, case in enumerate(y_test[:10]):
+            print("prediction class %i --> %i prediction" % (np.argmax(case), tmp[i]))
         print(tmp)
-        #score = cnn.evaluate(x_test, y_test, batch_size=batch_size, verbose=1)
-        #print(score)
+        score = cnn.evaluate(x_test, y_test, batch_size=batch_size, verbose=1)
+        print(score)
 
 
 if __name__ == "__main__":
-    cnn((x_train, y_train), (x_test, y_test))
+    assignment((x_train, y_train), (x_test, y_test))
