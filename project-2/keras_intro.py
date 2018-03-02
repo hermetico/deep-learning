@@ -86,7 +86,7 @@ y_test = np_utils.to_categorical(y_test, 10)
 # Connecting the layers of the network. Starting with an Input layer....
 inp = Input(batch_shape=(batch_size,) + x_train.shape[1:])
 
-# Making 2D convolutions with "filters" ( as many filters as classes?)kernels with a shape of (2,2)
+# Making 2D convolutions with "filters" kernels with a shape of (2,2)
 # Padding is valid, which means that no zero padding occurs.
 con = Conv2D(filters, kernel_size=(2, 2),
              padding='valid', activation='relu', strides=1)(inp)
