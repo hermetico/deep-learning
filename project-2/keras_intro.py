@@ -32,7 +32,7 @@ rn.seed(1234)
 batch_size = 600
 num_classes = 10
 epochs = 3
-filters = 10
+filters = 10# the depth of the convolutional volume
 
 
 ######################################################################
@@ -134,8 +134,12 @@ cnn.fit(x_train, y_train,
 
 print('Predicting...')
 pred = cnn.predict(x_test, batch_size=batch_size)
+
 tmp = [np.argmax(i) for i in pred[:10]]
 print('The 10 first test list examples have been predicted as the following:')
+for i, case in enumerate(y_test[:10]):
+    print("prediction class %i --> %i prediction" % (np.argmax(case), tmp[i]))
+
 print(tmp)
 
 
