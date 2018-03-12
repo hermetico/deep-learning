@@ -1,3 +1,4 @@
+
 import os
 # if you want to use Theano as backend
 #os.environ['KERAS_BACKEND']='theano'
@@ -32,7 +33,7 @@ rn.seed(1234)
 batch_size = 600
 num_classes = 10
 epochs = 3
-filters = 10# the depth of the convolutional volume
+filters = 10
 
 
 ######################################################################
@@ -49,12 +50,11 @@ for ii in range(10):
     plt.savefig('pic_{}.png'.format(ii))
 
 
-# reshaping the data so the keras network can understand it -> (rows, cols, channels)
+# reshaping the data so the keras network can understand it
 x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, 1)
 x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, 1)
 
 # Fitting the data to the batch size
-# rounds the arrays to match the batch size
 x_train = x_train[:int(int(len(x_train)/batch_size)*batch_size)]
 x_test = x_test[:int(int(len(x_test)/batch_size)*batch_size)]
 y_train = y_train[:int(int(len(y_train)/batch_size)*batch_size)]
@@ -63,10 +63,8 @@ y_test = y_test[:int(int(len(y_test)/batch_size)*batch_size)]
 # Keras needs numpy arrays as types float32
 x_train = x_train.astype('float32')
 x_test = x_test.astype('float32')
-# values of pixels between 0 and 1
 x_train /= 255 # Makes it easier to process for the CNN
 x_test /= 255
-
 y_train = np_utils.to_categorical(y_train, 10) # Makes each true label into a onehot vector
 y_test = np_utils.to_categorical(y_test, 10)
 
@@ -134,12 +132,8 @@ cnn.fit(x_train, y_train,
 
 print('Predicting...')
 pred = cnn.predict(x_test, batch_size=batch_size)
-
 tmp = [np.argmax(i) for i in pred[:10]]
 print('The 10 first test list examples have been predicted as the following:')
-for i, case in enumerate(y_test[:10]):
-    print("prediction class %i --> %i prediction" % (np.argmax(case), tmp[i]))
-
 print(tmp)
 
 

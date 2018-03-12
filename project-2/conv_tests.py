@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from keras.layers import Input, Dense, Flatten, MaxPool2D, Conv2D, Concatenate, Add
+from keras.layers import Input, Dense, Flatten, MaxPool2D, Conv2D, Concatenate, Add, Dropout
 from keras.models import Model
 import tensorflow as tf
 from keras.utils import np_utils, plot_model
@@ -28,7 +28,7 @@ rn.seed(1234)
 batch_size = 600
 num_classes = 10
 epochs = 3
-filters = 5
+filters = 32
 
 
 # input image dimensions
@@ -99,31 +99,19 @@ def assignment(data_train = None,
 
     # Connecting the layers of the network. Starting with an Input layer....
     inp = Input(batch_shape=(batch_size,) + x_train.shape[1:])
+    inp_drop = Dropout(.2)(inp)
 
-    conv2D_1 = Conv2D(filters, kernel_size=(3, 3),
-                 padding='same', activation='relu')(inp)
-
-    conv2D_2 = Conv2D(filters, kernel_size=(3, 3),
-                 padding='same', activation='relu')(inp)
-
-    max_pool2D_1 = MaxPool2D(pool_size=(2, 2), padding='valid')(conv2D_1)
-
-    max_pool2D_2 = MaxPool2D(pool_size=(2, 2), padding='valid')(conv2D_2)
+    conv2D_1 = Conv2D(filters, kernel_size=(3, 3), padding='same', activation='relu')(inp_drop)
+    conv2D_1_drop = Dropout(.5)(conv2D_1)
+    max_pool2D_1 = MaxPool2D(pool_size=(2,2), padding='same', strides=2)(conv2D_1_drop)
 
 
-    add_1 = Add()([max_pool2D_1, max_pool2D_2])
+    conv2D_2 = Conv2D(filters, kernel_size=(5, 5), padding='same', activation='relu')(max_pool2D_1)
+    conv2D_2_drop = Dropout(.5)(conv2D_2)
+    max_pool2D_2 = MaxPool2D(pool_size=(2,2), padding='same', strides=2)(conv2D_2_drop)
 
-    conv2D_3 = Conv2D(filters, kernel_size=(2, 2),
-                      padding='valid', activation='relu', strides=1)(add_1)
-
-    flat = Flatten()(conv2D_3)
-
-    dense_1 = Dense(units=1024, activation="relu")(flat)
-    dense_2 = Dense(units=1024, activation="relu")(dense_1)
-
-    con_1 = Concatenate()([dense_2, flat])
-
-    out = Dense(units=10, activation='softmax')(con_1)
+    flat = Flatten()(max_pool2D_2)
+    out = Dense(units=10, activation='softmax')(flat)
 
 
 
@@ -138,7 +126,7 @@ def assignment(data_train = None,
                 metrics=['accuracy'])
 
     cnn.summary()
-    plot_model(cnn, to_file='model.png')
+    plot_model(cnn, to_file='I_<3_U_CNN.png')
 
 
     if train:
