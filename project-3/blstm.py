@@ -164,7 +164,7 @@ bi = Bidirectional(
         recurrent_regularizer='l2'), name="BLSTM_layer")(inp_drop)
 
 flat = Flatten()(bi)
-out = Dense(1)(flat)
+out = Dense(1, activation='sigmoid')(flat)
 
 
 
